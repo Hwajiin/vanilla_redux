@@ -1,40 +1,56 @@
 import { createStore } from "redux";
 
-const add = document.querySelector(".add");
-const minus = document.querySelector(".minus");
-const number = document.querySelector("span");
+const form = document.querySelector("form");
+const input = document.querySelector("input");
+const ul = document.querySelector("ul");
 
-const ADD = "ADD";
-const MINUS = "MINUS";
+const ADD_TODO = "ADD_TODO";
+const DEL_TODO = "DEL_TODO";
 
-number.innerText = 0;
-
-const countModifier = (count = 0, action) => {
+const reducer = (state = [], action) => {
   switch (action.type) {
-    case ADD:
-      return count + 1;
-    case MINUS:
-      return count - 1;
+    case ADD_TODO:
+      const newToDoObj = { id: Date.now(), text: action.text };
+      return [...state, newToDoObj];
+    case DEL_TODO:
+      return state.filter((todo) => todo.id !== action.id);
     default:
-      return count;
+      return state;
   }
 };
 
-const countStore = createStore(countModifier);
+const store = createStore(reducer);
 
-const onChange = () => {
-  number.innerText = countStore.getState();
+const dispatchAddToDo = (text) => {
+  store.dispatch({ type: ADD_TODO, text });
 };
 
-countStore.subscribe(onChange);
-
-const handleAdd = () => {
-  countStore.dispatch({ type: ADD });
+const dispatchDelToDo = (e) => {
+  const id = e.target.parentNode.id;
+  store.dispatch({ type: DEL_TODO, id });
 };
 
-const handleMinus = () => {
-  countStore.dispatch({ type: MINUS });
+const handleSubmit = (e) => {
+  e.preventDefault();
+  const todo = input.value;
+  input.value = "";
+  store.dispatch(dispatchAddToDo(todo));
 };
 
-add.addEventListener("click", handleAdd);
-minus.addEventListener("click", handleMinus);
+const paintToDo = () => {
+  const toDos = store.getState();
+  ul.innerHTML = "";
+  toDos.forEacth((todo) => {
+    const li = document.createElement("li");
+    const btn = document.createElement("button");
+    btn.addEventListener("click", dispatchDelToDo(todo));
+    btn.innerText = "Del";
+    li.id = todo.id;
+    li.innerText = todo.text;
+    li.appendChild(btn);
+    ul.appendChild(li);
+  });
+};
+
+store.subsribe(paintToDo);
+form.addEventListener("submit", handleSubmit);
